@@ -1,0 +1,1 @@
+// Define as rotas /users/me, /users/me/emotes

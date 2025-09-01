@@ -1,0 +1,1 @@
+// Lida com requisições de histórico de partidas, como listar

@@ -1,0 +1,1 @@
+// Funções que interagem com a tabela Emotes

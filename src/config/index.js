@@ -1,0 +1,1 @@
+// Carrega e exporta todas as variáveis de ambiente

@@ -1,0 +1,1 @@
+// Lida com requisições de perfil, emotes, etc.

@@ -1,0 +1,1 @@
+// Lida com requisições para listar cartas

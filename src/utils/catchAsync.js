@@ -1,0 +1,1 @@
+// Wrapper para evitar try-catch repetitivo nos controllers

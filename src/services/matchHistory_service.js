@@ -1,0 +1,1 @@
+// Lógica de negócio: buscar histórico, cartas em campo

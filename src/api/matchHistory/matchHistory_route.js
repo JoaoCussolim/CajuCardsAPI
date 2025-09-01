@@ -1,0 +1,1 @@
+// Define as rotas do histórico

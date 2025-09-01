@@ -1,0 +1,1 @@
+// Cliente responsável pela autenticação das tabelas RLS no Supabase

@@ -1,0 +1,1 @@
+// Classe de erro customizada
