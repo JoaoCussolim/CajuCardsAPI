@@ -18,7 +18,6 @@ const supabase = createClient(config.supabase.url, config.supabase.anonKey);
 /**
  * @description Cliente Supabase com privilégios de administrador.
  * Utiliza a chave de serviço (service_role key) e ignora TODAS as políticas de RLS.
- * Use com cuidado e apenas no backend para tarefas administrativas.
  */
 const supabaseAdmin = createClient(config.supabase.url, config.supabase.serviceRoleKey, {
     auth: {

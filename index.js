@@ -2,7 +2,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 
-// Importa as rotas da API e o novo handler do socket
+// Importa as rotas da API o handler do socket
 import apiRoutes from './src/api/index.js';
 //import socketHandler from './src/socket/index.js';
 
@@ -23,7 +23,6 @@ app.use(express.json());
 app.use('/api', apiRoutes);
 
 // --- Lógica do Socket.IO ---
-// Delega toda a lógica de conexão e eventos para o handler especializado
 //socketHandler(io);
 
 // --- Inicialização do Servidor ---
