@@ -1,37 +1,38 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import 'dotenv/config';
 
-// Importa as rotas da API o handler do socket
 import apiRoutes from './src/api/index.js';
-//import socketHandler from './src/socket/index.js';
+import socketHandler from './src/socket/index.js';
+import MatchManager from './src/game/MatchManager.js';
 
-// --- Configuração Inicial ---
-const app = express();
-const httpServer = createServer(app);
-const io = new Server(httpServer, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
-});
+import * as cardModel from './src/models/card_model.js';
 
-// --- Middlewares do Express ---
-app.use(express.json());
+const startServer = async () => {
+    console.log('Carregando dados das cartas do banco de dados...');
+    const allCards = await cardModel.findAll();
 
-// --- Rotas da API REST ---
-app.use('/api', apiRoutes);
+    const app = express();
+    const httpServer = createServer(app);
+    const io = new Server(httpServer, {
+        cors: {
+            origin: "*",
+            methods: ["GET", "POST"]
+        }
+    });
 
-// --- Lógica do Socket.IO ---
-//socketHandler(io);
+    app.use(express.json());
 
-// --- Inicialização do Servidor ---
-const PORT = process.env.PORT || 3001;
-httpServer.listen(PORT, () => {
-    console.log(`Servidor (API e Socket.IO) rodando na porta ${PORT}`);
-});
+    app.use('/api', apiRoutes);
 
-// estrutura do .env
-//SUPABASE_URL=
-//SUPABASE_ANON_KEY=
-//SUPABASE_SERVICE_ROLE_KEY=
+    const matchManager = new MatchManager(io, allCards);
+    socketHandler(io, matchManager);
+
+    const PORT = process.env.PORT || 3001;
+    httpServer.listen(PORT, () => {
+        console.log(`Servidor (API e Socket.IO) rodando na porta ${PORT}`);
+    });
+};
+
+startServer();
