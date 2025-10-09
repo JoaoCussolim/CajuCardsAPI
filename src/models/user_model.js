@@ -16,7 +16,7 @@ export const findAll = async () => {
  * @returns {Promise<Object|null>}
  */
 export const findById = async (id) => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
         .from('players')
         .select('id, username, cashew_coins')
         .eq('id', id)
