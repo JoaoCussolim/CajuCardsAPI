@@ -5,7 +5,7 @@ import 'dotenv/config';
 
 import apiRoutes from './src/api/index.js';
 import socketHandler from './src/socket/index.js';
-import MatchManager from './src/game/MatchManager.js';
+import MatchManager from './src/socket/MatchManager.js';
 
 import * as cardModel from './src/models/card_model.js';
 
