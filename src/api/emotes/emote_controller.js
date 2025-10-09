@@ -68,6 +68,7 @@ export const updateEmote = catchAsync(async (req, res, next) => {
  * @route DELETE /api/emotes/:id
  */
 export const deleteEmote = catchAsync(async (req, res, next) => {
+        const { id } = req.params;
     const result = await emoteModel.remove(id);
 
     if (!result) {

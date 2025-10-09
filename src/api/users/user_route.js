@@ -13,20 +13,16 @@ const router = Router();
 // Todas as rotas abaixo desta linha exigem que o usuário esteja logado.
 router.use(protect);
 
-// Rota para o usuário logado gerenciar seu próprio perfil
-router.get('/me', getUserProfile); // Reutiliza getUserProfile para buscar o próprio usuário
-router.patch('/me', updateCurrentUser);
+// ROTA DE ADMIN (mais específica)
+router.get('/', restrictTo('admin'), getAllUsers);
 
-// Rotas para o usuário logado gerenciar seus emotes
+// ROTAS DO UTILIZADOR LOGADO (mais específicas)
+router.get('/me', getUserProfile);
+router.patch('/me', updateCurrentUser);
 router.get('/me/emotes', getCurrentUserEmotes);
 router.post('/me/emotes', addUserEmote);
 
-// --- Rotas Administrativas ---
-// Apenas administradores podem listar todos os usuários.
-router.get('/', restrictTo('admin'), getAllUsers);
-
-// Rota pública (dentro do 'protect') para ver o perfil de um usuário específico
-// NOTA: Esta rota foi movida para o final para não conflitar com '/me'
+// ROTA COM PARÂMETRO (mais genérica - DEVE SER A ÚLTIMA)
 router.get('/:id', getUserProfile);
 
 export default router;
