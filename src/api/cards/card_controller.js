@@ -8,7 +8,6 @@ import ApiError from '../../utils/ApiError.js';
  */
 export const getAllCards = catchAsync(async (req, res, next) => {
     const cards = await cardModel.findAll();
-
     res.status(200).json({
         status: 'success',
         results: cards.length,
