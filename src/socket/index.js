@@ -1,6 +1,7 @@
 import { Server } from 'socket.io';
 import { socketAuthMiddleware } from '../middleware/auth_middleware.js';
 import MatchManager from './matchManager.js';
+// CORREÇÃO 1: Mudar a importação para 'import * as Card'
 import * as Card from '../models/card_model.js';
 import { createServer } from 'http';
 
@@ -16,6 +17,7 @@ const socketHandler = (expressApp) => {
         },
     });
 
+    // CORREÇÃO 2: Mudar 'Card.getAll()' para 'Card.findAll()'
     Card.findAll().then(cardData => {
         matchManager = new MatchManager(io, cardData);
         console.log('[Socket] MatchManager inicializado.');
@@ -29,8 +31,7 @@ const socketHandler = (expressApp) => {
     io.on('connection', (socket) => {
         console.log(`✅ Usuário conectado: ${socket.player.username} (ID: ${socket.id})`);
 
-        // --- Lógica de Matchmaking (CORRIGIDA) ---
-        // 1. Adicionado 'async' e 'try...catch'
+        // --- Lógica de Matchmaking (Com try...catch) ---
         socket.on('findMatch', async () => {
             try {
                 console.log(`[Queue] ${socket.player.username} está procurando partida.`);
@@ -47,7 +48,6 @@ const socketHandler = (expressApp) => {
                     player1Socket.join(matchId);
                     player2Socket.join(matchId);
 
-                    // 2. Adicionado 'await'
                     await matchManager.createMatch(matchId, [player1Socket.player, player2Socket.player]);
 
                     io.to(matchId).emit('matchFound', {
@@ -57,9 +57,8 @@ const socketHandler = (expressApp) => {
                     console.log(`[Game] Partida ${matchId} criada para ${player1Socket.player.username} e ${player2Socket.player.username}`);
                 }
             } catch (error) {
-                // 3. Adicionado bloco 'catch'
-                console.error(`[findMatch Error] ${error.message}`);
-                socket.emit('actionInvalid', { message: 'Erro ao criar a partida.' });
+                console.error(`[findMatch Error] ${error.message}`, error);
+                socket.emit('actionInvalid', { message: 'Erro ao criar a partida. Tente novamente.' });
             }
         });
 
@@ -72,7 +71,6 @@ const socketHandler = (expressApp) => {
         });
 
         // --- EVENTOS DENTRO DA PARTIDA ---
-        // (Este handler 'playCard' já estava correto)
         socket.on('playCard', async (data) => {
             try {
                 const { matchId } = data;
@@ -93,7 +91,7 @@ const socketHandler = (expressApp) => {
             }
         });
 
-        // --- Manipulador de Desconexão (CORRIGIDO) ---
+        // --- Manipulador de Desconexão (Com .catch) ---
         socket.on('disconnect', (reason) => {
             console.log(`❌ Usuário desconectado: ${socket.player.username} (Motivo: ${reason})`);
 
@@ -106,16 +104,11 @@ const socketHandler = (expressApp) => {
             socket.rooms.forEach(room => {
                 if (room !== socket.id) {
                     console.log(`[Disconnect] ${socket.player.username} estava na partida ${room}. Finalizando.`);
-
                     socket.to(room).emit('opponentLeft', { playerId: socket.player.id });
 
-                    // 4. Correção para 'endMatch'
-                    // Como estamos em um forEach, não podemos usar await.
-                    // Em vez disso, adicionamos .catch() à promise.
-                    Promise.resolve(matchManager.endMatch(room))
-                        .catch(err => {
-                            console.error(`[endMatch Error] Erro ao finalizar partida ${room}: ${err.message}`);
-                        });
+                    matchManager.endMatch(room).catch(err => {
+                        console.error(`[endMatch Error] Erro ao finalizar partida ${room}: ${err.message}`);
+                    });
                 }
             });
         });

@@ -15,7 +15,7 @@ class MatchManager {
         console.log(`[Game] ${this.cardData.size} cartas carregadas na memória.`);
     }
 
-    createMatch(matchId, players) {
+    async createMatch(matchId, players) {
         const [player1Id, player2Id] = players.map(p => p.id);
 
         const initialState = {
@@ -133,7 +133,7 @@ class MatchManager {
 
                     // Se o alvo for uma tropa e morrer, remove do tabuleiro
                     if (target.instanceId && target.currentHealth <= 0) {
-                        matchState.board = matchState.board.filter(u => u.instanceId !== target.instanceId);
+                        matchState.board = matchState.board.filter(u => u.id !== target.id);
                         console.log(`[Combat] Unidade ${target.instanceId} destruída.`);
                     }
                 }
@@ -306,7 +306,6 @@ class MatchManager {
 
             if (card.type === 'Tropa') {
                 const unitInstance = {
-                    instanceId: uuidv4(),
                     cardId: card.id,
                     ownerId: playerId,
                     currentHealth: card.health,
@@ -333,7 +332,7 @@ class MatchManager {
 
     // --- FUNÇÕES AUXILIARES E DE GERENCIAMENTO ---
 
-    endMatch(matchId, winnerId) {
+    async endMatch(matchId, winnerId) {
         const matchState = this.activeMatches.get(matchId);
         if (!matchState || matchState.gameOver) return; // Evita finalização dupla
 
@@ -350,7 +349,26 @@ class MatchManager {
         console.log(`[Game Over] Partida ${matchId}. Vencedor: ${winnerUsername}`);
         this.io.to(matchId).emit('gameOver', { winnerId, winnerUsername });
 
-        // TODO: Salvar no banco de dados (matchHistory_model)
+        // --- LÓGICA DE SALVAR NO BANCO DE DADOS ---
+        try {
+            const loserId = Object.keys(matchState.players).find(id => id !== winnerId);
+            const player1Id = matchState.towers[Object.keys(matchState.towers)[0]].ownerId;
+            const player2Id = matchState.towers[Object.keys(matchState.towers)[1]].ownerId;
+
+            await MatchHistory.create({
+                player1_id: player1Id,
+                player2_id: player2Id,
+                winner_id: winnerId,
+                loser_id: loserId,
+                match_duration: 0, // Você pode calcular isso se adicionar um timestamp no createMatch
+                player1_tower_health: matchState.towers[player1Id].currentHealth,
+                player2_tower_health: matchState.towers[player2Id].currentHealth,
+            });
+            console.log(`[DB] Histórico da partida ${matchId} salvo.`);
+        } catch (error) {
+            console.error(`[DB Error] Falha ao salvar histórico da partida ${matchId}:`, error.message);
+        }
+        // --- FIM DA LÓGICA DO DB ---
 
         setTimeout(() => this.activeMatches.delete(matchId), 10000); // Limpa da memória
     }
