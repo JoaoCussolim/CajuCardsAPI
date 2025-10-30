@@ -1,7 +1,4 @@
-// Em: src/socket/index.js
 import { socketAuthMiddleware } from '../middleware/auth_middleware.js';
-
-// REMOVEMOS os imports de Server, createServer, Card, MatchManager
 
 const waitingQueue = [];
 // REMOVEMOS 'let matchManager;'
@@ -9,14 +6,8 @@ const waitingQueue = [];
 // CORREÇÃO: A função agora recebe 'io' e 'matchManager'
 const socketHandler = (io, matchManager) => {
 
-    // REMOVEMOS a criação do httpServer
-    // REMOVEMOS a criação do 'io'
-    // REMOVEMOS o carregamento das cartas (Card.findAll)
-
-    // Middleware de autenticação (usando o 'io' que recebemos)
     io.use(socketAuthMiddleware);
 
-    // Todo o seu 'io.on('connection', ...)' permanece igual
     io.on('connection', (socket) => {
         console.log(`✅ Usuário conectado: ${socket.player.username} (ID: ${socket.id})`);
 
