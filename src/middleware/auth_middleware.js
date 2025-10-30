@@ -63,4 +63,41 @@ const restrictTo = (...roles) => {
     };
 };
 
-export { protect, restrictTo };
+const socketAuthMiddleware = async (socket, next) => {
+    try {
+        // 1. Pega o token
+        const token = socket.handshake.auth.token;
+
+        if (!token) {
+            return next(new ApiError('Token não fornecido. Conexão recusada.', 401));
+        }
+
+        // 2. Valida o token no Supabase
+        const { data: { user }, error } = await supabase.auth.getUser(token);
+
+        if (error || !user) {
+            return next(new ApiError('Token inválido ou expirado. Conexão recusada.', 401));
+        }
+
+        // 3. Busca os dados do perfil (jogador) usando o user_model
+        // O socket/index.js espera por 'socket.player.username'
+        const playerData = await User.findById(user.id);
+
+        if (!playerData) {
+            return next(new ApiError('Perfil de jogador não encontrado.', 404));
+        }
+
+        // 4. Anexa os dados do JOGADOR ao socket
+        socket.player = playerData;
+
+        // 5. Sucesso, permite a conexão
+        next();
+
+    } catch (err) {
+        console.error('[Socket Auth] Erro no middleware:', err.message);
+        // Passa o erro para o socket.io
+        next(new ApiError(err.message || 'Erro interno de autenticação.', 500)); 
+    }
+};
+
+export { protect, restrictTo, socketAuthMiddleware };

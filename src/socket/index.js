@@ -1,7 +1,7 @@
 import { Server } from 'socket.io';
 import { socketAuthMiddleware } from '../middleware/auth_middleware.js';
 import MatchManager from './matchManager.js';
-import Card from '../models/card_model.js';
+import * as Card from '../models/card_model.js';
 import { createServer } from 'http'; // Importar http para compatibilidade
 
 const waitingQueue = [];
@@ -18,7 +18,7 @@ const socketHandler = (expressApp) => {
     });
 
     // Carrega os dados das cartas UMA VEZ
-    Card.getAll().then(cardData => {
+    Card.findAll().then(cardData => {
         // Inicializa o MatchManager com o 'io' e os dados das cartas
         matchManager = new MatchManager(io, cardData);
         console.log('[Socket] MatchManager inicializado.');
