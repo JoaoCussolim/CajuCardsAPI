@@ -46,33 +46,46 @@ class MatchManager {
     startGameLoop(matchId) {
         if (this.gameLoopIntervals.has(matchId)) return;
 
-        const intervalId = setInterval(() => {
-            const matchState = this.activeMatches.get(matchId);
-            if (!matchState || matchState.gameOver) {
-                clearInterval(intervalId);
-                this.gameLoopIntervals.delete(matchId);
-                return;
-            }
+        const intervalId = setInterval(async () => {
+            // 1. ADICIONAR O 'try' AQUI
+            try {
+                const matchState = this.activeMatches.get(matchId);
+                if (!matchState || matchState.gameOver) {
+                    clearInterval(intervalId);
+                    this.gameLoopIntervals.delete(matchId);
+                    return;
+                }
 
-            let stateChanged = false;
+                let stateChanged = false;
 
-            if (this.regenerateEnergy(matchState)) stateChanged = true;
+                if (this.regenerateEnergy(matchState)) stateChanged = true;
+                if (this.applySynergyBuffs(matchState)) stateChanged = true;
+                if (this.processUnits(matchState)) stateChanged = true;
+                if (this.applyBiomeRules(matchState)) stateChanged = true;
 
-            if (this.applySynergyBuffs(matchState)) stateChanged = true;
+                const winnerId = this.checkWinCondition(matchState);
+                if (winnerId) {
+                    await this.endMatch(matchId, winnerId); // Continua com 'await'
+                    return; // Para o loop
+                }
 
-            if (this.processUnits(matchState)) stateChanged = true;
+                if (stateChanged) {
+                    this.io.to(matchId).emit('gameStateUpdate', this.getSanitizedState(matchState));
+                }
 
-            if (this.applyBiomeRules(matchState)) stateChanged = true;
+                // 2. ADICIONAR O 'catch' AQUI
+            } catch (error) {
+                console.error(`[GameLoop Error] Erro fatal no loop da partida ${matchId}:`, error.message, error);
 
-            const winnerId = this.checkWinCondition(matchState);
-            if (winnerId) {
-                this.endMatch(matchId, winnerId);
-                return; // Para o loop
-            }
+                // Tenta notificar os jogadores que o servidor falhou
+                this.io.to(matchId).emit('internalError', { message: 'Erro interno no servidor. A partida será finalizada.' });
 
-            // Envia o estado atualizado para os clientes
-            if (stateChanged) {
-                this.io.to(matchId).emit('gameStateUpdate', this.getSanitizedState(matchState));
+                // Tenta finalizar a partida de forma segura para não travar
+                try {
+                    await this.endMatch(matchId, null); // Finaliza sem vencedor
+                } catch (endErr) {
+                    console.error(`[GameLoop Error] Falha ao tentar finalizar partida ${matchId} após erro:`, endErr.message);
+                }
             }
         }, GAME_TICK_RATE);
 
