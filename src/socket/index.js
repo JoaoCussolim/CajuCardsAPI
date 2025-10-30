@@ -1,33 +1,22 @@
-import { Server } from 'socket.io';
+// Em: src/socket/index.js
 import { socketAuthMiddleware } from '../middleware/auth_middleware.js';
-import MatchManager from './matchManager.js';
-// CORREÇÃO 1: Mudar a importação para 'import * as Card'
-import * as Card from '../models/card_model.js';
-import { createServer } from 'http';
+
+// REMOVEMOS os imports de Server, createServer, Card, MatchManager
 
 const waitingQueue = [];
-let matchManager;
+// REMOVEMOS 'let matchManager;'
 
-const socketHandler = (expressApp) => {
-    const httpServer = createServer(expressApp);
-    const io = new Server(httpServer, {
-        cors: {
-            origin: '*',
-            methods: ['GET', 'POST'],
-        },
-    });
+// CORREÇÃO: A função agora recebe 'io' e 'matchManager'
+const socketHandler = (io, matchManager) => {
 
-    // CORREÇÃO 2: Mudar 'Card.getAll()' para 'Card.findAll()'
-    Card.findAll().then(cardData => {
-        matchManager = new MatchManager(io, cardData);
-        console.log('[Socket] MatchManager inicializado.');
-    }).catch(err => {
-        console.error('[Socket] Erro fatal ao carregar dados das cartas:', err);
-        process.exit(1);
-    });
+    // REMOVEMOS a criação do httpServer
+    // REMOVEMOS a criação do 'io'
+    // REMOVEMOS o carregamento das cartas (Card.findAll)
 
+    // Middleware de autenticação (usando o 'io' que recebemos)
     io.use(socketAuthMiddleware);
 
+    // Todo o seu 'io.on('connection', ...)' permanece igual
     io.on('connection', (socket) => {
         console.log(`✅ Usuário conectado: ${socket.player.username} (ID: ${socket.id})`);
 
@@ -42,12 +31,12 @@ const socketHandler = (expressApp) => {
                 if (waitingQueue.length >= 2) {
                     const player1Socket = waitingQueue.shift();
                     const player2Socket = waitingQueue.shift();
-
                     const matchId = `match_${player1Socket.id}_${player2Socket.id}`;
 
                     player1Socket.join(matchId);
                     player2Socket.join(matchId);
 
+                    // Usa o matchManager que recebemos
                     await matchManager.createMatch(matchId, [player1Socket.player, player2Socket.player]);
 
                     io.to(matchId).emit('matchFound', {
@@ -77,7 +66,7 @@ const socketHandler = (expressApp) => {
                 if (!matchId) {
                     throw new Error("Match ID não fornecido.");
                 }
-
+                
                 await matchManager.processPlayerAction(matchId, socket.player.id, {
                     type: 'PLAY_CARD',
                     cardId: data.cardId,
@@ -102,10 +91,10 @@ const socketHandler = (expressApp) => {
             }
 
             socket.rooms.forEach(room => {
-                if (room !== socket.id) {
+                if (room !== socket.id) { 
                     console.log(`[Disconnect] ${socket.player.username} estava na partida ${room}. Finalizando.`);
                     socket.to(room).emit('opponentLeft', { playerId: socket.player.id });
-
+                    
                     matchManager.endMatch(room).catch(err => {
                         console.error(`[endMatch Error] Erro ao finalizar partida ${room}: ${err.message}`);
                     });
@@ -114,7 +103,7 @@ const socketHandler = (expressApp) => {
         });
     });
 
-    return httpServer;
+    // REMOVEMOS o 'return httpServer;'
 };
 
 export default socketHandler;
