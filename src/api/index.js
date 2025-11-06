@@ -3,7 +3,7 @@ import userRoutes from './users/user_route.js';
 import cardRoutes from './cards/card_route.js';
 import matchHistoryRoutes from './matchHistory/matchHistory_route.js';
 import emoteRoutes from './emotes/emote_route.js';
-import shopRoutes from './api/shop/shop_route.js'
+import shopRoutes from './shop/shop_route.js'
 
 const router = Router();
 
