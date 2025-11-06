@@ -27,13 +27,14 @@ const socketHandler = (io, matchManager) => {
                     player1Socket.join(matchId);
                     player2Socket.join(matchId);
 
-                    // Usa o matchManager que recebemos
-                    await matchManager.createMatch(matchId, [player1Socket.player, player2Socket.player]);
+                    // --- ALTERAÇÃO AQUI ---
+                    // 1. Agora capturamos o 'initialMatchState' que o createMatch retorna
+                    const initialMatchState = await matchManager.createMatch(matchId, [player1Socket.player, player2Socket.player]);
 
-                    io.to(matchId).emit('matchFound', {
-                        matchId: matchId,
-                        players: [player1Socket.player, player2Socket.player]
-                    });
+                    // 2. Enviamos o 'initialMatchState' COMPLETO, em vez de um objeto novo
+                    io.to(matchId).emit('matchFound', initialMatchState);
+                    // --- FIM DA ALTERAÇÃO ---
+                    
                     console.log(`[Game] Partida ${matchId} criada para ${player1Socket.player.username} e ${player2Socket.player.username}`);
                 }
             } catch (error) {
@@ -94,7 +95,6 @@ const socketHandler = (io, matchManager) => {
         });
     });
 
-    // REMOVEMOS o 'return httpServer;'
 };
 
 export default socketHandler;

@@ -41,6 +41,8 @@ class MatchManager {
         this.activeMatches.set(matchId, initialState);
         console.log(`[Game] Partida ${matchId} criada.`);
         this.startGameLoop(matchId);
+
+        return initialState;
     }
 
     startGameLoop(matchId) {
