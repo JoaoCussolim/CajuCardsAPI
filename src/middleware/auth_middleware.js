@@ -1,6 +1,7 @@
 import { supabase } from '../services/supabaseClient_service.js';
 import catchAsync from '../utils/catchAsync.js';
 import ApiError from '../utils/ApiError.js';
+import * as User from '../models/user_model.js';
 
 /**
  * @description Middleware para proteger rotas. Verifica o token JWT do usuário.
