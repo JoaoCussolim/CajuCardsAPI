@@ -4,9 +4,9 @@ import catchAsync from '../../utils/catchAsync.js';
 import ApiError from '../../utils/ApiError.js';
 
 const CHEST_PRICES = {
-    'bau_mercurio': 200,
-    'bau_plutonio': 300,
-    'bau_uranio': 400
+    'Baú Mercúrio': 200,
+    'Baú Plutônio': 300,
+    'Baú Urânio': 400
 };
 
 /**
