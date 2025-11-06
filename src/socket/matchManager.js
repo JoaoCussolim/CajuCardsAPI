@@ -26,18 +26,14 @@ class MatchManager {
                     username: players[0].username, 
                     energy: 5, 
                     lastEnergyUpdate: Date.now(),
-                    // --- ADICIONE OS CAMPOS INT QUE FALTAM ---
-                    health: 100,
-                    score: 0
+                    health: 100
                 },
                 [player2Id]: { 
                     id: player2Id, 
                     username: players[1].username, 
                     energy: 5, 
                     lastEnergyUpdate: Date.now(),
-                    // --- ADICIONE OS CAMPOS INT QUE FALTAM ---
-                    health: 100,
-                    score: 0
+                    health: 100
                 }
             },
             // As torres agora fazem parte do estado e são os alvos principais
