@@ -1,3 +1,5 @@
+// api/shop/shop_controller.js
+
 import * as userModel from '../../models/user_model.js';
 import * as emoteModel from '../../models/emote_model.js';
 import catchAsync from '../../utils/catchAsync.js';
@@ -24,21 +26,28 @@ export const buyChest = catchAsync(async (req, res, next) => {
         return next(new ApiError('Tipo de baú inválido.', 400));
     }
 
-    // 3. Busca o jogador e verifica se ele tem moedas
+    // 3. Busca o jogador
     const player = await userModel.findById(userId);
+
+    // 4. (NOVA VERIFICAÇÃO) Garante que o jogador foi encontrado
+    if (!player) {
+        return next(new ApiError('Perfil do jogador não encontrado.', 404));
+    }
+
+    // 5. (ANTIGO PASSO 3) Verifica se ele tem moedas
     if (player.cashew_coins < price) {
         // 402 = Payment Required (Pagamento Necessário)
         return next(new ApiError('Moedas insuficientes.', 402));
     }
 
-    // 4. Sorteia um emote
+    // 6. Sorteia um emote
     const allEmotes = await emoteModel.findAll();
     if (!allEmotes || allEmotes.length === 0) {
         return next(new ApiError('Nenhum emote disponível para sorteio.', 500));
     }
     const wonEmote = allEmotes[Math.floor(Math.random() * allEmotes.length)];
 
-    // 5. Tenta adicionar o emote ao jogador
+    // 7. Tenta adicionar o emote ao jogador
     let isDuplicate = false;
     try {
         await userModel.addEmoteToPlayer(userId, wonEmote.id);
@@ -51,7 +60,7 @@ export const buyChest = catchAsync(async (req, res, next) => {
         }
     }
 
-    // 6. Calcula o novo total de moedas
+    // 8. Calcula o novo total de moedas
     let newCoinTotal = player.cashew_coins - price;
     
     // Opcional: Dar uma "recompensa" por emotes duplicados
@@ -60,10 +69,10 @@ export const buyChest = catchAsync(async (req, res, next) => {
         newCoinTotal += refundAmount;
     }
 
-    // 7. Atualiza as moedas do jogador no banco
+    // 9. Atualiza as moedas do jogador no banco
     const updatedPlayer = await userModel.update(userId, { cashew_coins: newCoinTotal });
 
-    // 8. Responde para o App com os dados atualizados
+    // 10. Responde para o App com os dados atualizados
     res.status(200).json({
         status: 'success',
         data: {
