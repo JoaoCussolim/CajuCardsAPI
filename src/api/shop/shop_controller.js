@@ -16,9 +16,20 @@ const CHEST_PRICES = {
  * @route POST /api/shop/buy-chest
  */
 export const buyChest = catchAsync(async (req, res, next) => {
-    // 1. Pega o ID do usuário (do middleware 'protect') e o nome do baú
+    // 1. Pega o nome do baú
     const { chest_name } = req.body;
+
+    // --- INÍCIO DA CORREÇÃO ---
+    // 1.A. VERIFICA SE O USUÁRIO EXISTE NA REQUISIÇÃO (DO MIDDLEWARE 'protect')
+    // Se req.user não existir, o middleware 'protect' falhou ou o token
+    // está ausente/inválido. Tentar acessar req.user.id causaria o 500.
+    if (!req.user || !req.user.id) {
+        // 401 = Unauthorized (Não Autorizado)
+        return next(new ApiError('Usuário não autenticado. Faça login novamente.', 401)); 
+    }
+    // Agora é seguro acessar o ID
     const userId = req.user.id;
+    // --- FIM DA CORREÇÃO ---
 
     // 2. Verifica se é um baú válido e pega o preço
     const price = CHEST_PRICES[chest_name];
@@ -29,12 +40,12 @@ export const buyChest = catchAsync(async (req, res, next) => {
     // 3. Busca o jogador
     const player = await userModel.findById(userId);
 
-    // 4. (NOVA VERIFICAÇÃO) Garante que o jogador foi encontrado
+    // 4. Garante que o jogador foi encontrado
     if (!player) {
         return next(new ApiError('Perfil do jogador não encontrado.', 404));
     }
 
-    // 5. (ANTIGO PASSO 3) Verifica se ele tem moedas
+    // 5. Verifica se ele tem moedas
     if (player.cashew_coins < price) {
         // 402 = Payment Required (Pagamento Necessário)
         return next(new ApiError('Moedas insuficientes.', 402));
