@@ -7,7 +7,20 @@ import ApiError from '../../utils/ApiError.js';
  * @route GET /api/match-history
  */
 export const getUserMatchHistory = catchAsync(async (req, res, next) => {
-    const history = await matchHistoryModel.findHistoryByPlayerId(req.user.id);
+    console.log('--- [MATCH CONTROLLER] INICIADO ---');
+    
+    // Este é o ID do perfil do jogador que veio do middleware
+    const playerId = req.user.id;
+    
+    console.log(`[MATCH CONTROLLER] Buscando histórico para o Player ID: ${playerId}`);
+
+    // Executa a consulta
+    const history = await matchHistoryModel.findHistoryByPlayerId(playerId);
+
+    console.log(`[MATCH CONTROLLER] Consulta ao BD retornou: ${history.length} partidas.`);
+    console.log('[MATCH CONTROLLER] Dados brutos da consulta:', history);
+
+    console.log('--- [MATCH CONTROLLER] CONCLUÍDO ---');
 
     res.status(200).json({
         status: 'success',
@@ -17,6 +30,8 @@ export const getUserMatchHistory = catchAsync(async (req, res, next) => {
         },
     });
 });
+
+// ... (resto do arquivo, getMatchDetailsById)
 
 /**
  * @description Busca os detalhes completos de uma partida específica.
