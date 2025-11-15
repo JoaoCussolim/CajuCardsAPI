@@ -1,6 +1,7 @@
-// models/matchHistory_model.js (CORRIGIDO E SIMPLIFICADO)
+// models/matchHistory_model.js (CORRIGIDO)
 
-import { supabase } from '../services/supabaseClient_service.js';
+import { supabase, supabaseAdmin } from '../services/supabaseClient_service.js'; 
+// 1. IMPORTAR O supabaseAdmin
 
 /**
  * @description Busca uma lista de partidas de um jogador específico.
@@ -9,18 +10,8 @@ import { supabase } from '../services/supabaseClient_service.js';
  */
 export const findHistoryByPlayerId = async (playerId) => {
     
-    // ============ AQUI ESTÁ A MUDANÇA ============
-    // Trocamos a sintaxe 'players!constraint_name' pela sintaxe
-    // 'players!coluna_de_chave_estrangeira'.
-    //
-    // player1:players!player1_id significa:
-    // "Crie o apelido 'player1' fazendo join com 'players' usando a coluna 'player1_id'"
-    //
-    // Esta sintaxe é muito mais robusta e não quebra se o nome da
-    // constraint mudar.
-    // ============================================
-
-    const { data, error } = await supabase
+    // 2. USAR supabaseAdmin para ignorar RLS
+    const { data, error } = await supabaseAdmin
         .from('matchhistory')
         .select(`
             id,
@@ -30,15 +21,13 @@ export const findHistoryByPlayerId = async (playerId) => {
             winner:players!winner_id ( id, username )
         `)
         .or(`player1_id.eq.${playerId},player2_id.eq.${playerId}`)
-        .order('match_date', { ascending: false }); // Ordena das mais recentes para as mais antigas
+        .order('match_date', { ascending: false });
 
     if (error) {
-        // Se ainda houver um erro, ele aparecerá no console do seu servidor Node.js
-        console.error('Erro na consulta de histórico:', error);
+        console.error('Erro na consulta de histórico (Admin):', error);
         throw error;
     }
 
-    // Isso deve agora retornar os dados
     return data;
 };
 
@@ -48,8 +37,9 @@ export const findHistoryByPlayerId = async (playerId) => {
  * @returns {Promise<Object|null>}
  */
 export const findMatchDetailsById = async (matchId) => {
-    // Também aplicamos a correção aqui
-    const { data: matchData, error: matchError } = await supabase
+    
+    // 2. USAR supabaseAdmin aqui também
+    const { data: matchData, error: matchError } = await supabaseAdmin
         .from('matchhistory')
         .select(`
             id,
@@ -66,7 +56,9 @@ export const findMatchDetailsById = async (matchId) => {
         throw matchError;
     }
 
-    const { data: cardsData, error: cardsError } = await supabase
+    // A tabela 'matchhistorycards' também pode precisar do admin
+    // 2. USAR supabaseAdmin aqui também
+    const { data: cardsData, error: cardsError } = await supabaseAdmin
         .from('matchhistorycards')
         .select(`
             player_id,
@@ -76,7 +68,7 @@ export const findMatchDetailsById = async (matchId) => {
         .eq('match_id', matchId);
 
     if (cardsError) {
-        console.error('Erro ao buscar cartas da partida:', cardsError);
+        console.error('Erro ao buscar cartas da partida (Admin):', cardsError);
         throw cardsError;
     }
 
