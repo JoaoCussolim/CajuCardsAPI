@@ -1,16 +1,19 @@
+// middleware/auth_middleware.js
+
 import { supabase } from '../services/supabaseClient_service.js';
 import catchAsync from '../utils/catchAsync.js';
 import ApiError from '../utils/ApiError.js';
-import * as User from '../models/user_model.js';
+import * as User from '../models/user_model.js'; // Este import já existia
 
 /**
  * @description Middleware para proteger rotas. Verifica o token JWT do usuário.
  * 1. Pega o token do header 'Authorization'.
  * 2. Valida o token usando o Supabase.
- * 3. Se o token for válido, anexa o usuário ao objeto `req`.
+ * 3. [MODIFICADO] Busca o perfil do JOGADOR associado.
+ * 4. [MODIFICADO] Anexa o JOGADOR ao objeto `req`.
  */
 const protect = catchAsync(async (req, res, next) => {
-    // 1. Verificar se o token existe
+    // 1. Verificar se o token existe (lógica original)
     let token;
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         token = req.headers.authorization.split(' ')[1];
@@ -22,7 +25,7 @@ const protect = catchAsync(async (req, res, next) => {
         );
     }
 
-    // 2. Verificar se o token é válido
+    // 2. Verificar se o token é válido (lógica original)
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error) {
@@ -30,9 +33,19 @@ const protect = catchAsync(async (req, res, next) => {
         return next(new ApiError('Token inválido ou expirado. Por favor, faça o login novamente.', 401));
     }
 
-    // 3. Se o token é válido e o usuário existe, anexa o usuário à requisição
-    // O objeto 'user' do Supabase contém id, email, etc.
-    req.user = user;
+    // 3. [MODIFICADO] Buscar o PERFIL DO JOGADOR usando o ID de autenticação
+    // O 'user.id' é o ID da tabela 'auth.users'
+    // Precisamos encontrar o perfil correspondente na tabela 'players'
+    // Estamos usando a mesma lógica do seu socketAuthMiddleware
+    const playerData = await User.findById(user.id); 
+
+    if (!playerData) {
+        return next(new ApiError('Perfil de jogador não encontrado para este usuário.', 404));
+    }
+
+    // 4. [MODIFICADO] Anexar o *perfil do jogador* (playerData) ao req.user
+    // Agora, req.user conterá o ID da tabela 'players', username, etc.
+    req.user = playerData;
 
     // Passa para o próximo middleware ou controller
     next();
@@ -41,17 +54,10 @@ const protect = catchAsync(async (req, res, next) => {
 
 /**
  * @description Middleware para restringir o acesso a certas roles (ex: 'admin').
- * @param {...string} roles - As roles que têm permissão para acessar a rota.
- * @returns {function} Middleware do Express.
- *
- * @example
- * // Apenas usuários com a role 'admin' podem acessar:
- * router.post('/', protect, restrictTo('admin'), createCard);
+ * (Função original - sem modificações)
  */
 const restrictTo = (...roles) => {
     return (req, res, next) => {
-        // A role do usuário geralmente é armazenada no 'app_metadata' ou 'user_metadata' no Supabase Auth.
-        // Vamos assumir que está em 'app_metadata.role'.
         const userRole = req.user?.app_metadata?.role;
 
         if (!roles.includes(userRole)) {
@@ -64,6 +70,10 @@ const restrictTo = (...roles) => {
     };
 };
 
+/**
+ * @description Middleware de autenticação para Sockets
+ * (Função original - sem modificações)
+ */
 const socketAuthMiddleware = async (socket, next) => {
     try {
         // 1. Pega o token
@@ -81,7 +91,6 @@ const socketAuthMiddleware = async (socket, next) => {
         }
 
         // 3. Busca os dados do perfil (jogador) usando o user_model
-        // O socket/index.js espera por 'socket.player.username'
         const playerData = await User.findById(user.id);
 
         if (!playerData) {
