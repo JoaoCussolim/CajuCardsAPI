@@ -1,3 +1,5 @@
+// models/matchHistory_model.js (CORRIGIDO E SIMPLIFICADO)
+
 import { supabase } from '../services/supabaseClient_service.js';
 
 /**
@@ -6,19 +8,37 @@ import { supabase } from '../services/supabaseClient_service.js';
  * @returns {Promise<Array>}
  */
 export const findHistoryByPlayerId = async (playerId) => {
+    
+    // ============ AQUI ESTÁ A MUDANÇA ============
+    // Trocamos a sintaxe 'players!constraint_name' pela sintaxe
+    // 'players!coluna_de_chave_estrangeira'.
+    //
+    // player1:players!player1_id significa:
+    // "Crie o apelido 'player1' fazendo join com 'players' usando a coluna 'player1_id'"
+    //
+    // Esta sintaxe é muito mais robusta e não quebra se o nome da
+    // constraint mudar.
+    // ============================================
+
     const { data, error } = await supabase
         .from('matchhistory')
         .select(`
             id,
             match_date,
-            player1:players!matchhistory_player1_id_fkey ( id, username ),
-            player2:players!matchhistory_player2_id_fkey ( id, username ),
-            winner:players!matchhistory_winner_id_fkey ( id, username )
+            player1:players!player1_id ( id, username ),
+            player2:players!player2_id ( id, username ),
+            winner:players!winner_id ( id, username )
         `)
         .or(`player1_id.eq.${playerId},player2_id.eq.${playerId}`)
         .order('match_date', { ascending: false }); // Ordena das mais recentes para as mais antigas
 
-    if (error) throw error;
+    if (error) {
+        // Se ainda houver um erro, ele aparecerá no console do seu servidor Node.js
+        console.error('Erro na consulta de histórico:', error);
+        throw error;
+    }
+
+    // Isso deve agora retornar os dados
     return data;
 };
 
@@ -28,14 +48,15 @@ export const findHistoryByPlayerId = async (playerId) => {
  * @returns {Promise<Object|null>}
  */
 export const findMatchDetailsById = async (matchId) => {
+    // Também aplicamos a correção aqui
     const { data: matchData, error: matchError } = await supabase
         .from('matchhistory')
         .select(`
             id,
             match_date,
-            player1:players!matchhistory_player1_id_fkey ( id, username ),
-            player2:players!matchhistory_player2_id_fkey ( id, username ),
-            winner:players!matchhistory_winner_id_fkey ( id, username )
+            player1:players!player1_id ( id, username ),
+            player2:players!player2_id ( id, username ),
+            winner:players!winner_id ( id, username )
         `)
         .eq('id', matchId)
         .single();
@@ -50,15 +71,15 @@ export const findMatchDetailsById = async (matchId) => {
         .select(`
             player_id,
             level_in_match,
-            card:cards ( id, name, sprite_path )
+            card:cards!card_id ( id, name, sprite_path ) 
         `)
         .eq('match_id', matchId);
 
-    if (cardsError) throw cardsError;
+    if (cardsError) {
+        console.error('Erro ao buscar cartas da partida:', cardsError);
+        throw cardsError;
+    }
 
-    // Estrutura o resultado final
-    return {
-        ...matchData,
-        cards_used: cardsData,
-    };
+    // Combina os dados
+    return { ...matchData, cards: cardsData };
 };
