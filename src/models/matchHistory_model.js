@@ -78,7 +78,7 @@ export const findMatchDetailsById = async (matchId) => {
 
 export const create = async (matchData) => {
     const { data, error } = await supabaseAdmin
-        .from('MatchHistory')
+        .from('matchhistory')
         .insert(matchData)
         .select()
         .single();
