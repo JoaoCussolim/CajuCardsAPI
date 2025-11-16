@@ -1,6 +1,6 @@
 // models/matchHistory_model.js (CORRIGIDO)
 
-import { supabase, supabaseAdmin } from '../services/supabaseClient_service.js'; 
+import { supabase, supabaseAdmin } from '../services/supabaseClient_service.js';
 // 1. IMPORTAR O supabaseAdmin
 
 /**
@@ -9,7 +9,7 @@ import { supabase, supabaseAdmin } from '../services/supabaseClient_service.js';
  * @returns {Promise<Array>}
  */
 export const findHistoryByPlayerId = async (playerId) => {
-    
+
     // 2. USAR supabaseAdmin para ignorar RLS
     const { data, error } = await supabaseAdmin
         .from('matchhistory')
@@ -37,7 +37,7 @@ export const findHistoryByPlayerId = async (playerId) => {
  * @returns {Promise<Object|null>}
  */
 export const findMatchDetailsById = async (matchId) => {
-    
+
     // 2. USAR supabaseAdmin aqui também
     const { data: matchData, error: matchError } = await supabaseAdmin
         .from('matchhistory')
@@ -74,4 +74,15 @@ export const findMatchDetailsById = async (matchId) => {
 
     // Combina os dados
     return { ...matchData, cards: cardsData };
+};
+
+export const create = async (matchData) => {
+    const { data, error } = await supabaseAdmin
+        .from('MatchHistory')
+        .insert(matchData)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
 };

@@ -41,7 +41,7 @@ export const getUserProfile = catchAsync(async (req, res, next) => {
  */
 export const updateCurrentUser = catchAsync(async (req, res, next) => {
     // Permite apenas a atualização de campos não sensíveis (ex: username)
-    const allowedUpdates = { username: req.body.username };
+    const allowedUpdates = { username: req.body.username, cashew_coins: req.body.cashew_coins };
 
     const updatedUser = await userModel.update(req.user.id, allowedUpdates);
 
