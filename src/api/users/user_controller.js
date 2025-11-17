@@ -52,6 +52,28 @@ export const updateCurrentUser = catchAsync(async (req, res, next) => {
 });
 
 /**
+ * @description Adiciona 1000 moedas ao usuário logado (recompensa de vitória).
+ * @route POST /api/users/me/claim-victory
+ */
+export const claimVictoryReward = catchAsync(async (req, res, next) => {
+    const victoryAmount = 1000;
+    const playerId = req.user.id;
+
+    const currentCoins = req.user.cashew_coins;
+    const newTotalCoins = currentCoins + victoryAmount;
+    const updatedPlayer = await userModel.update(playerId, { 
+        cashew_coins: newTotalCoins 
+    });
+
+    res.status(200).json({
+        status: 'success',
+        data: { 
+            user: updatedPlayer 
+        },
+    });
+});
+
+/**
  * @description Busca os emotes do usuário logado.
  * @route GET /api/users/me/emotes
  */

@@ -4,7 +4,8 @@ import {
     getUserProfile,
     updateCurrentUser,
     getCurrentUserEmotes,
-    addUserEmote
+    addUserEmote,
+    claimVictoryReward
 } from './user_controller.js';
 import { protect, restrictTo } from '../../middleware/auth_middleware.js';
 
@@ -21,6 +22,7 @@ router.get('/me', getUserProfile);
 router.patch('/me', updateCurrentUser);
 router.get('/me/emotes', getCurrentUserEmotes);
 router.post('/me/emotes', addUserEmote);
+router.post('/me/claim-victory', claimVictoryReward); 
 
 // ROTA COM PARÂMETRO (mais genérica - DEVE SER A ÚLTIMA)
 router.get('/:id', getUserProfile);
